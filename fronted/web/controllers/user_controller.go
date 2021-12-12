@@ -68,7 +68,7 @@ func (c *UserController) PostLogin() mvc.Response {
 	//3、写入用户ID到cookie中
 	tool.GlobalCookie(c.Ctx, "uid", strconv.FormatInt(user.ID, 10))
 	println(user.ID)
-	c.Session.Set("userID", strconv.FormatInt(user.ID, 10)) //?
+	// c.Session.Set("userID", strconv.FormatInt(user.ID, 10)) //?
 
 	return mvc.Response{
 		Path: "/product/",
