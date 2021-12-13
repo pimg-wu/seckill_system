@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	datamodels "shopping_system/dataModels"
+	"shopping_system/encrypt"
 	"shopping_system/services"
 	"shopping_system/tool"
 	"strconv"
@@ -67,7 +69,14 @@ func (c *UserController) PostLogin() mvc.Response {
 
 	//3、写入用户ID到cookie中
 	tool.GlobalCookie(c.Ctx, "uid", strconv.FormatInt(user.ID, 10))
-	println(user.ID)
+	uidByte := []byte(strconv.FormatInt(user.ID, 10))
+	uidString, err := encrypt.EnPwdCode(uidByte)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	//写入用户浏览器
+	tool.GlobalCookie(c.Ctx, "sign", uidString)
 	// c.Session.Set("userID", strconv.FormatInt(user.ID, 10)) //?
 
 	return mvc.Response{

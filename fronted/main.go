@@ -7,11 +7,9 @@ import (
 	"shopping_system/fronted/web/controllers"
 	"shopping_system/repositories"
 	"shopping_system/services"
-	"time"
 
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/mvc"
-	"github.com/kataras/iris/v12/sessions"
 )
 
 func main() {
@@ -31,17 +29,14 @@ func main() {
 	if err != nil {
 
 	}
-	sess := sessions.New(sessions.Config{
-		Cookie:  "AdminCookie",
-		Expires: 600 * time.Minute,
-	})
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	user := repositories.NewUserRepository("user", db)
 	userService := services.NewService(user)
 	userPro := mvc.New(app.Party("/user"))
-	userPro.Register(userService, ctx, sess)
+	userPro.Register(userService, ctx)
 	userPro.Handle(new(controllers.UserController))
 
 	product := repositories.NewProductManager("product", db)
