@@ -1,8 +1,9 @@
-package RabbitMq
+package rabbitmq
 
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/streadway/amqp"
 )
@@ -19,6 +20,7 @@ type RabbitMQ struct {
 	Exchange  string //交换机
 	key       string //key
 	Mqurl     string //连接信息
+	sync.Mutex
 }
 
 //创建RabbitMQ实例
@@ -52,7 +54,9 @@ func NewRabbitMQSimple(queueName string) *RabbitMQ {
 }
 
 //2、简单模式生产代码
-func (r *RabbitMQ) PublishSimple(message string) {
+func (r *RabbitMQ) PublishSimple(message string) error {
+	r.Lock()
+	defer r.Unlock()
 	//申请队列，若不存在自动创建，存在则跳过
 	//保证队列存在，消息发送到队列
 	_, err := r.channel.QueueDeclare(
@@ -64,7 +68,7 @@ func (r *RabbitMQ) PublishSimple(message string) {
 		nil,   //额外属性
 	)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	//发送消息到队列中
@@ -76,8 +80,8 @@ func (r *RabbitMQ) PublishSimple(message string) {
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(message),
-		},
-	)
+		})
+	return nil
 }
 
 //3、简单模式消费者

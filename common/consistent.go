@@ -33,6 +33,13 @@ type Consistent struct {
 	sync.RWMutex                   //map读写锁
 }
 
+func NewConsistent() *Consistent {
+	return &Consistent{
+		circle:      make(map[uint32]string),
+		VirtualNode: 20,
+	}
+}
+
 //自动生成key值
 func (c *Consistent) generateKey(element string, index int) string {
 	return element + strconv.Itoa(index)
@@ -62,6 +69,13 @@ func (c *Consistent) updateSortedHashed() {
 
 	sort.Sort(hashes) //排序方便之后进行二分查找
 	c.sortedHashes = hashes
+}
+
+//向hash环中添加节点
+func (c *Consistent) Add(element string) {
+	c.Lock()
+	defer c.Unlock()
+	c.add(element)
 }
 
 //添加节点

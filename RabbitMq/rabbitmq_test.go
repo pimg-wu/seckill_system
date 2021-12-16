@@ -1,4 +1,4 @@
-package RabbitMq
+package rabbitmq
 
 import (
 	"fmt"

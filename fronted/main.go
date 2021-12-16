@@ -5,6 +5,7 @@ import (
 	"shopping_system/common"
 	"shopping_system/fronted/middleware"
 	"shopping_system/fronted/web/controllers"
+	"shopping_system/rabbitmq"
 	"shopping_system/repositories"
 	"shopping_system/services"
 
@@ -39,6 +40,8 @@ func main() {
 	userPro.Register(userService, ctx)
 	userPro.Handle(new(controllers.UserController))
 
+	rabbitmq := rabbitmq.NewRabbitMQSimple("product")
+
 	product := repositories.NewProductManager("product", db)
 	productService := services.NewProductService(product)
 	order := repositories.NewOrderManagerRepository("order", db)
@@ -46,7 +49,7 @@ func main() {
 	proProduct := app.Party("/product")
 	pro := mvc.New(proProduct)
 	proProduct.Use(middleware.AuthConProduct)
-	pro.Register(productService, orderService)
+	pro.Register(productService, orderService, rabbitmq)
 	pro.Handle(new(controllers.ProductController))
 
 	app.Run(iris.Addr("0.0.0.0:8082"), iris.WithoutServerError(iris.ErrServerClosed), iris.WithOptimizations)
