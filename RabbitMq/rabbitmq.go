@@ -1,8 +1,11 @@
 package rabbitmq
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	datamodels "shopping_system/dataModels"
+	"shopping_system/services"
 	"sync"
 
 	"github.com/streadway/amqp"
@@ -85,7 +88,7 @@ func (r *RabbitMQ) PublishSimple(message string) error {
 }
 
 //3、简单模式消费者
-func (r *RabbitMQ) ConsumeSimple() {
+func (r *RabbitMQ) ConsumeSimple(orderService services.IOrderService, productService services.IProductService) {
 	//申请队列，若不存在自动创建，存在则跳过
 	//保证队列存在，消息发送到队列
 	_, err := r.channel.QueueDeclare(
@@ -100,11 +103,18 @@ func (r *RabbitMQ) ConsumeSimple() {
 		fmt.Println(err)
 	}
 
+	//消费者流控， 防止暴库
+	r.channel.Qos(
+		1,     //当前消费者一次能接受的最大消息数量
+		0,     //服务器传递的最大容量（以八位字节为单位）
+		false, //如果设置为true 对channel可用
+	)
+
 	//接收消息
 	msgs, err := r.channel.Consume(
 		r.QueueName,
 		"",    //用来区分多个消费者
-		true,  //是否自动应答
+		false, //是否自动应答
 		false, //是否具有排他性
 		false, //若为true，表示不能将同一个conn中发送的消息传播给消费者
 		false, //队列消费是否阻塞
@@ -119,6 +129,25 @@ func (r *RabbitMQ) ConsumeSimple() {
 		for d := range msgs {
 			//实现要处理的逻辑函数
 			log.Printf("Received a message: %s", d.Body)
+			message := &datamodels.Message{}
+			err := json.Unmarshal([]byte(d.Body), message)
+			if err != nil {
+				fmt.Println(err)
+			}
+			//插入订单
+			_, err = orderService.InsertOrderByMessage(message)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			//扣除商品数量
+			err = productService.SubNumberOne(message.ProductID)
+			if err != nil {
+				fmt.Println(err)
+			}
+			//如果为true表示确认所有未确认的消息
+			//为false表示确认当前消息
+			d.Ack(false)
 		}
 	}()
 
