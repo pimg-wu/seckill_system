@@ -12,7 +12,7 @@ import (
 )
 
 //url格式：amqp://账号:密码@服务器地址:端口号/vhost
-const MQURL = "amqp://testuser:123456@192.168.48.128:5672/test"
+const MQURL = "amqp://admin:admin@42.192.43.242:5672/test"
 
 // const MQURL = "amqp://testuser:123456@127.0.0.1:5672/test"
 
