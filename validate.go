@@ -283,7 +283,9 @@ func main() {
 	//1、过滤器
 	filter := common.NewFilter()
 	filter.RegisterFilterUri("/check", Auth)
+	filter.RegisterFilterUri("/checkRight", Auth)
 	//2、启动服务
 	http.HandleFunc("/check", filter.Handle(Check))
+	http.HandleFunc("/checkRight", filter.Handle(CheckRight))
 	http.ListenAndServe(":8083", nil)
 }
